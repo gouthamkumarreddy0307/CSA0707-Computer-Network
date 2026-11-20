@@ -1,0 +1,183 @@
+=====================================================================
+ SMART CAMPUS NETWORK - CISCO PACKET TRACER IMPLEMENTATION
+
+=====================================================================
+ 
+STEP 1 - DEVICES TO PLACE
+---------------------------------------------------------------------
+ 1 x Cisco 3560-24PS (Multilayer Switch)  -> rename CORE-L3
+ 4 x Cisco 2911 Router                    -> rename R-CSE, R-ECE, R-EEE, R-ADM
+ 4 x Cisco 2960 Switch                    -> rename SW-CSE, SW-ECE, SW-EEE, SW-Admin
+ 8 x PC                                   -> CSE-PC1/2, ECE-PC1/2, EEE-PC1/2, Admin-PC1/2
+ 
+STEP 2 - CABLING (Copper Straight-Through everywhere)
+---------------------------------------------------------------------
+ CORE-L3  Fa0/1  <->  R-CSE   Gi0/0
+ CORE-L3  Fa0/2  <->  R-ECE   Gi0/0
+ CORE-L3  Fa0/3  <->  R-EEE   Gi0/0
+ CORE-L3  Fa0/4  <->  R-ADM   Gi0/0
+ 
+ R-CSE    Gi0/1  <->  SW-CSE    Fa0/1
+ R-ECE    Gi0/1  <->  SW-ECE    Fa0/1
+ R-EEE    Gi0/1  <->  SW-EEE    Fa0/1
+ R-ADM    Gi0/1  <->  SW-Admin  Fa0/1
+ 
+ SW-CSE   Fa0/2 <-> CSE-PC1    | Fa0/3 <-> CSE-PC2
+ SW-ECE   Fa0/2 <-> ECE-PC1    | Fa0/3 <-> ECE-PC2
+ SW-EEE   Fa0/2 <-> EEE-PC1    | Fa0/3 <-> EEE-PC2
+ SW-Admin Fa0/2 <-> Admin-PC1  | Fa0/3 <-> Admin-PC2
+ 
+ (PC port: FastEthernet0. Router ports turn green only after
+  "no shutdown" is given.)
+ 
+STEP 3 - CLI CONFIGURATION
+---------------------------------------------------------------------
+ Open each device > CLI tab > press Enter, then paste the block.
+ 
+############ CORE-L3 (3560-24PS) ############
+enable
+configure terminal
+hostname CORE-L3
+ip routing
+!
+interface FastEthernet0/1
+ no switchport
+ ip address 192.168.10.193 255.255.255.252
+ no shutdown
+interface FastEthernet0/2
+ no switchport
+ ip address 192.168.10.197 255.255.255.252
+ no shutdown
+interface FastEthernet0/3
+ no switchport
+ ip address 192.168.10.201 255.255.255.252
+ no shutdown
+interface FastEthernet0/4
+ no switchport
+ ip address 192.168.10.205 255.255.255.252
+ no shutdown
+exit
+!
+ip route 192.168.10.0   255.255.255.192 192.168.10.194
+ip route 192.168.10.64  255.255.255.192 192.168.10.198
+ip route 192.168.10.128 255.255.255.224 192.168.10.202
+ip route 192.168.10.160 255.255.255.224 192.168.10.206
+end
+write memory
+ 
+############ R-CSE (2911) ############
+enable
+configure terminal
+hostname R-CSE
+interface GigabitEthernet0/0
+ ip address 192.168.10.194 255.255.255.252
+ no shutdown
+interface GigabitEthernet0/1
+ ip address 192.168.10.1 255.255.255.192
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 192.168.10.193
+ip dhcp excluded-address 192.168.10.1 192.168.10.5
+ip dhcp pool CSE-LAN
+ network 192.168.10.0 255.255.255.192
+ default-router 192.168.10.1
+end
+write memory
+ 
+############ R-ECE (2911) ############
+enable
+configure terminal
+hostname R-ECE
+interface GigabitEthernet0/0
+ ip address 192.168.10.198 255.255.255.252
+ no shutdown
+interface GigabitEthernet0/1
+ ip address 192.168.10.65 255.255.255.192
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 192.168.10.197
+ip dhcp excluded-address 192.168.10.65 192.168.10.69
+ip dhcp pool ECE-LAN
+ network 192.168.10.64 255.255.255.192
+ default-router 192.168.10.65
+end
+write memory
+ 
+############ R-EEE (2911) ############
+enable
+configure terminal
+hostname R-EEE
+interface GigabitEthernet0/0
+ ip address 192.168.10.202 255.255.255.252
+ no shutdown
+interface GigabitEthernet0/1
+ ip address 192.168.10.129 255.255.255.224
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 192.168.10.201
+ip dhcp excluded-address 192.168.10.129 192.168.10.133
+ip dhcp pool EEE-LAN
+ network 192.168.10.128 255.255.255.224
+ default-router 192.168.10.129
+end
+write memory
+ 
+############ R-ADM (2911) ############
+enable
+configure terminal
+hostname R-ADM
+interface GigabitEthernet0/0
+ ip address 192.168.10.206 255.255.255.252
+ no shutdown
+interface GigabitEthernet0/1
+ ip address 192.168.10.161 255.255.255.224
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 192.168.10.205
+ip dhcp excluded-address 192.168.10.161 192.168.10.165
+ip dhcp pool ADMIN-LAN
+ network 192.168.10.160 255.255.255.224
+ default-router 192.168.10.161
+end
+write memory
+ 
+############ ACCESS SWITCHES (2960) - optional hostname only ############
+enable
+configure terminal
+hostname SW-CSE        (use SW-ECE / SW-EEE / SW-Admin on the others)
+end
+write memory
+ 
+STEP 4 - END DEVICES (PCs)
+---------------------------------------------------------------------
+ PC > Desktop > IP Configuration > select DHCP.
+ Expected first leases:
+   CSE-PC1 192.168.10.6    CSE-PC2 192.168.10.7
+   ECE-PC1 192.168.10.70   ECE-PC2 192.168.10.71
+   EEE-PC1 192.168.10.134  EEE-PC2 192.168.10.135
+   Admin-PC1 192.168.10.166  Admin-PC2 192.168.10.167
+ 
+ (If DHCP is not wanted, set static IPs from the same pools with the
+  gateway of that department and the mask from the tables.)
+ 
+STEP 5 - VERIFICATION
+---------------------------------------------------------------------
+ On CORE-L3:
+   show ip route
+   show ip interface brief
+ On any router:
+   show ip interface brief
+   show ip dhcp binding
+   show running-config
+ On PCs (Desktop > Command Prompt):
+   ipconfig
+   ping 192.168.10.1                 (own gateway, from CSE-PC1)
+   ping 192.168.10.7                 (same department)
+   ping 192.168.10.70                (CSE -> ECE)
+   ping 192.168.10.134               (CSE -> EEE)
+   ping 192.168.10.166               (CSE -> Admin)
+   tracert 192.168.10.166            (expect hops .1, .193, .206, .166)
+ 
+ Note: first ping may show 1 timeout while ARP resolves; repeat it.
+ Take screenshots of topology, show ip route, ipconfig and pings
+ for the report.
